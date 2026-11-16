@@ -27,8 +27,8 @@ const table = (n: number, seats: number, cx: number, cy: number, shape: TableSpo
 
 /**
  * The real room, traced from the owner's hand drawing:
- * - centre: Π-shaped bar, 12 stools (1-3 right side bottom-up, 4 top-right corner,
- *   5-7 along the top right-to-left, 8 top-left corner, 9-12 left side top-down)
+ * - centre: Π-shaped bar, 12 stools (1-4 right side bottom-up, 5-8 along the top
+ *   right-to-left, 9-12 left side top-down)
  * - right: tables 1, 2, 3 (2 seats each)
  * - left room, behind a wall with a passage: 11, 8, 9 (4), 6 (3), 7, 10 (2), and 4, 5 (4) by the wall
  * Total: 12 + 5x4 + 3 + 5x2 = 45 seats.
@@ -48,13 +48,13 @@ export const DEFAULT_LAYOUT: FloorLayout = {
       ],
       stools: [
         { n: 1, x: 74.2, y: 33 },
-        { n: 2, x: 74.2, y: 26.5 },
-        { n: 3, x: 74.2, y: 20 },
-        { n: 4, x: 67.8, y: 4.8 },
-        { n: 5, x: 61.5, y: 4.8 },
-        { n: 6, x: 57.2, y: 4.8 },
-        { n: 7, x: 52.9, y: 4.8 },
-        { n: 8, x: 46.7, y: 4.8 },
+        { n: 2, x: 74.2, y: 26 },
+        { n: 3, x: 74.2, y: 19 },
+        { n: 4, x: 74.2, y: 12 },
+        { n: 5, x: 66, y: 4.8 },
+        { n: 6, x: 59.7, y: 4.8 },
+        { n: 7, x: 53.4, y: 4.8 },
+        { n: 8, x: 47, y: 4.8 },
         { n: 9, x: 40.3, y: 17.5 },
         { n: 10, x: 40.3, y: 22.5 },
         { n: 11, x: 40.3, y: 27.5 },
