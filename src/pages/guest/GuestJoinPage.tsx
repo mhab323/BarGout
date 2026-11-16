@@ -24,6 +24,20 @@ import type { Party, SeatingPref, Settings } from '@/types'
 
 const PREFS: SeatingPref[] = ['any', 'bar', 'table']
 
+/** Why the invisible guest sign-in failed, in words the owner can act on. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function guestSignInProblem(code: string): { emoji: string; title: string; text: string } {
+  if (code.includes('admin-restricted-operation') || code.includes('operation-not-allowed'))
+    return {
+      emoji: '🔒',
+      title: 'ההרשמה דרך הטלפון עוד לא הופעלה',
+      text: 'לבעלים: Firebase → Authentication → Sign-in method → Anonymous → Enable',
+    }
+  if (code.includes('network-request-failed')) return { emoji: '📶', title: 'אין חיבור', text: 'בדקו את האינטרנט ונסו שוב.' }
+  if (code.includes('too-many-requests')) return { emoji: '⏳', title: 'יותר מדי ניסיונות', text: 'נסו שוב בעוד דקה.' }
+  return { emoji: '😕', title: 'משהו השתבש', text: 'נסו שוב, או פנו אלינו בכניסה.' }
+}
+
 function limitNote(settings: Settings) {
   const hours = settings.tableLimitMinutes / 60
   return fillTemplate(settings.messages.timeLimitNote, { hours: Number.isInteger(hours) ? hours : hours.toFixed(1) })
@@ -31,16 +45,25 @@ function limitNote(settings: Settings) {
 
 export function GuestJoinPage() {
   const [uid, setUid] = useState<string | null>(null)
-  const [authFailed, setAuthFailed] = useState(false)
+  /** Firebase error code when the invisible guest sign-in failed. */
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
 
   // Sign in anonymously (invisible to the guest). Keep an existing session (e.g. a staff tablet testing).
   useEffect(
     () =>
       onAuthStateChanged(auth, (user) => {
-        if (user) setUid(user.uid)
-        else signInAnonymously(auth).catch(() => setAuthFailed(true))
+        if (user) {
+          setUid(user.uid)
+          setAuthError(null)
+        } else {
+          signInAnonymously(auth).catch((e: { code?: string }) => {
+            console.error('Guest sign-in failed', e)
+            setAuthError(e?.code ?? 'unknown')
+          })
+        }
       }),
-    [],
+    [attempt],
   )
 
   const queue = useLiveDoc(queueRef)
@@ -56,7 +79,20 @@ export function GuestJoinPage() {
   const onList = p && (p.status === 'waiting' || p.status === 'notified')
 
   let content: React.ReactNode
-  if (authFailed) content = <Message emoji="📶" title="אין חיבור" text="בדקו את האינטרנט ונסו לרענן את הדף." />
+  if (authError) {
+    const problem = guestSignInProblem(authError)
+    content = (
+      <div className="space-y-6 text-center">
+        <Message {...problem} />
+        <Button size="lg" onClick={() => setAttempt((n) => n + 1)}>
+          נסו שוב
+        </Button>
+        <p dir="ltr" className="text-xs text-muted-foreground/70">
+          {authError}
+        </p>
+      </div>
+    )
+  }
   else if (loading) content = <Loader2 className="mx-auto mt-16 size-8 animate-spin text-primary" />
   else if (onList) content = <OnTheList party={p} uid={uid} settings={settings} position={positionOf(queue.data?.order, uid)} busy={busy} />
   else if (p?.status === 'seated') content = <Message emoji="🍷" title="ערב טוב!" text={busy ? `תהנו! ${limitNote(settings)}` : 'תהנו מהערב.'} />
