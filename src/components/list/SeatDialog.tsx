@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Armchair, TriangleAlert } from 'lucide-react'
+import { Armchair, MoveLeft, TriangleAlert } from 'lucide-react'
 
 import { FloorMap, type SpotStatus } from '@/components/floor/FloorMap'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { seatGroup } from '@/lib/actions'
+import { moveGroup, seatGroup } from '@/lib/actions'
 import { pickStools } from '@/lib/matching'
 import { barsOf, describeSpots, occupiedSpots, occupiedStools, seatsIn, tablesOf } from '@/lib/occupancy'
 import type { FloorLayout, Party } from '@/types'
@@ -25,26 +25,35 @@ function suggestSpots(party: Party, layout: FloorLayout, occupied: Map<string, P
   return party.pref === 'any' && stools ? stools : []
 }
 
-/** Pick a table or bar stools on the real map and seat the group. */
+/**
+ * Pick a table or bar stools on the real map.
+ * mode "seat": seat a group from the list. mode "move": move a seated group (their timer keeps running).
+ */
 export function SeatDialog({
   party,
   layout,
   seated,
   busyMode,
+  mode = 'seat',
   onOpenChange,
 }: {
   party: Party | null
   layout: FloorLayout
   seated: Party[]
   busyMode: boolean
+  mode?: 'seat' | 'move'
   onOpenChange: (open: boolean) => void
 }) {
-  const occupied = useMemo(() => occupiedSpots(seated), [seated])
+  const moving = mode === 'move'
+  // When moving, the group's own places count as free (they can keep a stool and add one).
+  const others = useMemo(() => (moving && party ? seated.filter((p) => p.id !== party.id) : seated), [moving, party, seated])
+  const occupied = useMemo(() => occupiedSpots(others), [others])
   const [selection, setSelection] = useState<string[] | null>(null)
-  const current = selection ?? (party ? suggestSpots(party, layout, occupied) : [])
+  const current = selection ?? (party && !moving ? suggestSpots(party, layout, occupied) : [])
 
   const status: Record<string, SpotStatus> = {}
   for (const [id, p] of occupied) status[id] = { state: 'seated', tone: 'idle', caption: p.name.slice(0, 8) }
+  if (moving && party) for (const id of party.spotIds) status[id] = { state: 'held', caption: 'כאן' }
 
   function toggle(spotId: string) {
     if (occupied.has(spotId)) return
@@ -64,7 +73,8 @@ export function SeatDialog({
 
   function confirm() {
     if (!party || !current.length) return
-    void seatGroup(party.id, current, busyMode).catch((err) => console.error('seatGroup failed', err))
+    const write = moving ? moveGroup(party.id, current) : seatGroup(party.id, current, busyMode)
+    void write.catch((err) => console.error(moving ? 'moveGroup failed' : 'seatGroup failed', err))
     close()
   }
 
@@ -77,9 +87,13 @@ export function SeatDialog({
           <>
             <DialogHeader>
               <DialogTitle>
-                הושבה: {party.name} ({party.size})
+                {moving ? 'העברה' : 'הושבה'}: {party.name} ({party.size})
               </DialogTitle>
-              <DialogDescription>לחצו על שולחן, או על כיסאות בר (אפשר כמה). מקומות תפוסים מסומנים באפור.</DialogDescription>
+              <DialogDescription>
+                {moving
+                  ? 'לחצו על המקום החדש (שולחן, או כיסאות בר). המקום הנוכחי מסומן בקו מקווקו. הזמן ממשיך לרוץ.'
+                  : 'לחצו על שולחן, או על כיסאות בר (אפשר כמה). מקומות תפוסים מסומנים באפור.'}
+              </DialogDescription>
             </DialogHeader>
 
             <div className="rounded-lg border bg-card p-2">
@@ -100,11 +114,11 @@ export function SeatDialog({
                     <TriangleAlert className="size-4" /> פחות מקומות מגודל הקבוצה
                   </p>
                 )}
-                {busyMode && <p className="mt-1 text-sm text-muted-foreground">מצב עומס: שעתיים מתחילות עכשיו</p>}
+                {busyMode && !moving && <p className="mt-1 text-sm text-muted-foreground">מצב עומס: שעתיים מתחילות עכשיו</p>}
               </div>
               <Button size="lg" onClick={confirm} disabled={!current.length}>
-                <Armchair />
-                הושבה
+                {moving ? <MoveLeft /> : <Armchair />}
+                {moving ? 'העברה' : 'הושבה'}
               </Button>
             </div>
           </>

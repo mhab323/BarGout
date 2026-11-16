@@ -63,6 +63,12 @@ export const seatGroup = (id: string, spotIds: string[], busyMode: boolean) =>
     limitStartAt: busyMode ? serverTimestamp() : null,
   })
 
+/** Move a seated group to another table / other stools. Their timer keeps running (seatedAt stays). */
+export const moveGroup = (id: string, spotIds: string[]) => updateDoc(partyRef(id), { spotIds })
+
+/** The group left: the table is free again. */
+export const finishGroup = (id: string) => updateDoc(partyRef(id), { status: 'done', endedAt: serverTimestamp() })
+
 // ---------- busy mode / QR join (public queue doc, readable by the guest page) ----------
 
 export function ensureQueue() {

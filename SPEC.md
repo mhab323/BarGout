@@ -70,7 +70,8 @@ Owner-only: layout editor, settings, stats. Both roles can run the list and the 
 - Each occupied table shows the group name, size, and timer:
   - **Not busy:** gray, elapsed time only
   - **Busy:** green below 1:30, **yellow** from 1:30, **red** from 1:50, and "over time" after 2:00
-- Tap a table to see actions: **Seat group** (picks from the list), **Bill asked**, **Free table**.
+- Tap an occupied table or stool: who sits there and for how long, with **Move** (pick the new table / stools on the map; the 2-hour timer keeps running from the original seating time) and **Free** (they left). ✅
+- Still to come on tap: **Bill asked**, and seating a walk-in on a free table.
 - **Bar stools** are seated individually (for example, a group of 2 takes stools 5–6), so each group at the bar has its own timer.
 - **Suggestion:** when a table is free or has the bill asked, it shows the next group (`src/lib/matching.ts`, tested):
   1. the **first group in line that fits** the table and wants this kind of seat (or "either")

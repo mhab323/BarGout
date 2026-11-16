@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Pencil, Plus, RotateCcw, Save, Trash2, X } from 'lucide-react'
 
 import { FloorMap, type SpotStatus } from '@/components/floor/FloorMap'
+import { GroupDialog } from '@/components/floor/GroupDialog'
+import { SeatDialog } from '@/components/list/SeatDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,7 +13,7 @@ import { DEFAULT_LAYOUT, totalSeats } from '@/lib/defaults'
 import { addTable, duplicateLabels, moveTable, removeTable, tablesIn, updateTable } from '@/lib/layoutEdit'
 import { occupiedSpots } from '@/lib/occupancy'
 import { cn } from '@/lib/utils'
-import type { FloorLayout, SpotShape } from '@/types'
+import type { FloorLayout, Party, SpotShape } from '@/types'
 
 const SEAT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8]
 const SHAPES: { value: SpotShape; label: string }[] = [
@@ -26,6 +28,9 @@ export function FloorPage() {
   const [draft, setDraft] = useState<FloorLayout | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  /** Group tapped on the map (not editing), and the group being moved. */
+  const [openGroupId, setOpenGroupId] = useState<string | null>(null)
+  const [moving, setMoving] = useState<Party | null>(null)
 
   const editing = draft !== null
   const layout = draft ?? bar.layout
@@ -35,6 +40,14 @@ export function FloorPage() {
   const taken = bar.seated.reduce((sum, p) => sum + p.size, 0)
 
   const selected = editing ? tablesIn(layout).find((t) => t.id === selectedId) : undefined
+  // Live copy, so the dialog closes if the group is freed from another tablet.
+  const openGroup = openGroupId ? (bar.seated.find((p) => p.id === openGroupId) ?? null) : null
+
+  /** Normal mode: tapping a place where people sit opens their group. */
+  function onSpotTap(spotId: string) {
+    const party = occupied.get(spotId)
+    if (party) setOpenGroupId(party.id)
+  }
   const duplicates = editing ? duplicateLabels(layout) : []
 
   function startEditing() {
@@ -109,6 +122,9 @@ export function FloorPage() {
         )}
       </div>
 
+      {!editing && bar.seated.length > 0 && (
+        <p className="text-sm text-muted-foreground">לחיצה על שולחן תפוס — להעברה למקום אחר או לפינוי.</p>
+      )}
       {editing && (
         <p className="rounded-lg bg-accent px-3 py-2 text-sm text-accent-foreground">
           גררו שולחן כדי להזיז אותו (למשל מבפנים החוצה). לחיצה על שולחן — לשינוי מספר, מקומות או הסרה.
@@ -127,7 +143,7 @@ export function FloorPage() {
           status={status}
           selected={selected ? [selected.id] : []}
           showGrid={editing}
-          onSpotClick={editing ? (id) => setSelectedId(id.includes(':') ? null : id) : undefined}
+          onSpotClick={editing ? (id) => setSelectedId(id.includes(':') ? null : id) : onSpotTap}
           onTableMove={editing ? (id, x, y) => setDraft((d) => (d ? moveTable(d, id, x, y) : d)) : undefined}
           className="size-full"
         />
@@ -199,6 +215,25 @@ export function FloorPage() {
           </Button>
         </div>
       )}
+
+      <GroupDialog
+        party={openGroup}
+        layout={bar.layout}
+        onOpenChange={(o) => !o && setOpenGroupId(null)}
+        onMove={(party) => {
+          setOpenGroupId(null)
+          setMoving(party)
+        }}
+      />
+      <SeatDialog
+        key={moving?.id ?? 'none'}
+        mode="move"
+        party={moving}
+        layout={bar.layout}
+        seated={bar.seated}
+        busyMode={bar.busyMode}
+        onOpenChange={(o) => !o && setMoving(null)}
+      />
     </section>
   )
 }
