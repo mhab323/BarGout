@@ -88,3 +88,15 @@ export function pickStools(stoolNumbers: number[], occupied: Set<number>, size: 
   runs.sort((a, b) => a.length - b.length || a[0] - b[0])
   return runs[0].slice(0, size)
 }
+
+/**
+ * Stools for a group of `size` starting from the stool that was tapped: the tapped stool,
+ * then its free neighbours (higher numbers first, then lower). Null if the row is too short.
+ */
+export function stoolsFrom(stoolNumbers: number[], occupied: Set<number>, tapped: number, size: number): number[] | null {
+  const run = freeStoolRuns(stoolNumbers, occupied).find((r) => r.includes(tapped))
+  if (!run || run.length < size) return null
+  const i = run.indexOf(tapped)
+  const start = Math.min(i, run.length - size)
+  return run.slice(start, start + size)
+}

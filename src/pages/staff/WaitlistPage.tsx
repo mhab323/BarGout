@@ -29,6 +29,13 @@ export function WaitlistPage() {
       )
       if (best) result.set(best.party.id, `מתאים עכשיו: שולחן ${t.label}`)
     }
+    // Tables that asked for the bill are next.
+    for (const t of tablesOf(bar.layout).filter((t) => occupied.get(t.id)?.billAt).sort((a, b) => a.seats - b.seats)) {
+      const best = rankCandidates({ kind: 'table', seats: t.seats }, bar.list).find(
+        (c) => c.reason !== 'other-pref' && !result.has(c.party.id),
+      )
+      if (best) result.set(best.party.id, `הבאים לשולחן ${t.label} (ביקשו חשבון)`)
+    }
     const counter = barsOf(bar.layout)[0]
     if (counter) {
       const run = longestFreeRun(counter.stools.map((s) => s.n), occupiedStools(counter, occupied))

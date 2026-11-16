@@ -33,6 +33,8 @@ export const db = initializeFirestore(app, {
 })
 
 if (useEmulators) {
-  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
-  connectFirestoreEmulator(db, '127.0.0.1', 8080)
+  // Same machine that serves the app, so a tablet on the Wi-Fi can test against the computer's emulators.
+  const host = window.location.hostname
+  connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true })
+  connectFirestoreEmulator(db, host, 8080)
 }

@@ -240,7 +240,8 @@ export function FloorMap({
               y={st?.caption ? cy + 1.6 : cy + 2.3}
               textAnchor="middle"
               dominantBaseline="central"
-              direction="rtl"
+              // Hebrew ("4 מק׳") reads right-to-left; timers ("+0:10") left-to-right
+              direction={/[\u0590-\u05FF]/.test(st?.caption ?? 'מ') ? 'rtl' : 'ltr'}
               className="pointer-events-none fill-foreground/70 text-[1.3px]"
             >
               {st?.caption ?? `${t.seats} מק׳`}

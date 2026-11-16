@@ -68,7 +68,13 @@ export function PartyCard({ party, position, settings, busyMode, now, hint, onSe
         {hint && !notified && <p className="mt-1 text-sm font-medium text-timer-ok">{hint}</p>}
         {notified && (
           <p className={cn('mt-1 text-sm font-semibold', holdOver ? 'text-destructive' : 'text-primary')}>
-            {holdOver ? `עבר הזמן (+${clock(-holdLeftSec)}) — לא הגיעו?` : `נשלחה הודעה · חוזרים תוך ${clock(holdLeftSec)}`}
+            {holdOver ? (
+              <>
+                עבר הזמן (<span dir="ltr">+{clock(-holdLeftSec)}</span>) — לא הגיעו?
+              </>
+            ) : (
+              <>נשלחה הודעה · חוזרים תוך {clock(holdLeftSec)}</>
+            )}
           </p>
         )}
       </div>

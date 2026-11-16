@@ -2,16 +2,19 @@ import { useState } from 'react'
 import { Pencil, Plus, RotateCcw, Save, Trash2, X } from 'lucide-react'
 
 import { FloorMap, type SpotStatus } from '@/components/floor/FloorMap'
+import { FreeSpotDialog } from '@/components/floor/FreeSpotDialog'
 import { GroupDialog } from '@/components/floor/GroupDialog'
 import { SeatDialog } from '@/components/list/SeatDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useBar } from '@/hooks/barDataContext'
+import { useNow } from '@/hooks/useNow'
 import { saveLayout } from '@/lib/actions'
 import { DEFAULT_LAYOUT, totalSeats } from '@/lib/defaults'
 import { addTable, duplicateLabels, moveTable, removeTable, tablesIn, updateTable } from '@/lib/layoutEdit'
 import { occupiedSpots } from '@/lib/occupancy'
+import { tableTimer, timerCaption } from '@/lib/timers'
 import { cn } from '@/lib/utils'
 import type { FloorLayout, Party, SpotShape } from '@/types'
 
@@ -31,22 +34,29 @@ export function FloorPage() {
   /** Group tapped on the map (not editing), and the group being moved. */
   const [openGroupId, setOpenGroupId] = useState<string | null>(null)
   const [moving, setMoving] = useState<Party | null>(null)
+  const [freeSpotId, setFreeSpotId] = useState<string | null>(null)
+  const now = useNow(30000)
 
   const editing = draft !== null
   const layout = draft ?? bar.layout
   const occupied = occupiedSpots(bar.seated)
   const status: Record<string, SpotStatus> = {}
-  for (const [id, p] of occupied) status[id] = { state: 'seated', tone: 'idle', caption: p.name.slice(0, 8) }
+  const busySinceMs = bar.queue?.busySince?.toMillis() ?? null
+  for (const [id, p] of occupied) {
+    const timer = tableTimer(p, { busyMode: bar.busyMode, busySinceMs, now, settings: bar.settings })
+    status[id] = { state: p.billAt ? 'bill' : 'seated', tone: timer.tone, caption: timerCaption(timer) }
+  }
   const taken = bar.seated.reduce((sum, p) => sum + p.size, 0)
 
   const selected = editing ? tablesIn(layout).find((t) => t.id === selectedId) : undefined
   // Live copy, so the dialog closes if the group is freed from another tablet.
   const openGroup = openGroupId ? (bar.seated.find((p) => p.id === openGroupId) ?? null) : null
 
-  /** Normal mode: tapping a place where people sit opens their group. */
+  /** Normal mode: tap a place where people sit -> their group; tap a free place -> seat someone. */
   function onSpotTap(spotId: string) {
     const party = occupied.get(spotId)
     if (party) setOpenGroupId(party.id)
+    else setFreeSpotId(spotId)
   }
   const duplicates = editing ? duplicateLabels(layout) : []
 
@@ -122,9 +132,7 @@ export function FloorPage() {
         )}
       </div>
 
-      {!editing && bar.seated.length > 0 && (
-        <p className="text-sm text-muted-foreground">לחיצה על שולחן תפוס — להעברה למקום אחר או לפינוי.</p>
-      )}
+      {!editing && <Legend busyMode={bar.busyMode} settings={bar.settings} />}
       {editing && (
         <p className="rounded-lg bg-accent px-3 py-2 text-sm text-accent-foreground">
           גררו שולחן כדי להזיז אותו (למשל מבפנים החוצה). לחיצה על שולחן — לשינוי מספר, מקומות או הסרה.
@@ -219,6 +227,10 @@ export function FloorPage() {
       <GroupDialog
         party={openGroup}
         layout={bar.layout}
+        list={bar.list}
+        settings={bar.settings}
+        busyMode={bar.busyMode}
+        busySinceMs={busySinceMs}
         onOpenChange={(o) => !o && setOpenGroupId(null)}
         onMove={(party) => {
           setOpenGroupId(null)
@@ -226,7 +238,7 @@ export function FloorPage() {
         }}
       />
       <SeatDialog
-        key={moving?.id ?? 'none'}
+        key={moving ? `move-${moving.id}` : 'move-none'}
         mode="move"
         party={moving}
         layout={bar.layout}
@@ -234,6 +246,41 @@ export function FloorPage() {
         busyMode={bar.busyMode}
         onOpenChange={(o) => !o && setMoving(null)}
       />
+      <FreeSpotDialog
+        key={freeSpotId ? `free-${freeSpotId}` : 'free-none'}
+        spotId={freeSpotId}
+        layout={bar.layout}
+        list={bar.list}
+        seated={bar.seated}
+        busyMode={bar.busyMode}
+        onOpenChange={(o) => !o && setFreeSpotId(null)}
+      />
     </section>
+  )
+}
+
+/** Color key under the title. In busy mode the colors count toward the 2-hour limit. */
+function Legend({ busyMode, settings }: { busyMode: boolean; settings: { warnAtMinutes: number; lateAtMinutes: number } }) {
+  const item = (cls: string, label: string) => (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={cn('inline-block size-3.5 rounded-sm border border-foreground/20', cls)} />
+      {label}
+    </span>
+  )
+  const h = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+      {busyMode ? (
+        <>
+          {item('bg-timer-ok', `עד ${h(settings.warnAtMinutes)}`)}
+          {item('bg-timer-warn', `${h(settings.warnAtMinutes)}–${h(settings.lateAtMinutes)}`)}
+          {item('bg-timer-late', `מ-${h(settings.lateAtMinutes)}`)}
+        </>
+      ) : (
+        item('bg-timer-idle', 'תפוס (לא במצב עומס — בלי הגבלה)')
+      )}
+      {item('bg-card border-dashed border-primary', 'ביקשו חשבון')}
+      <span className="ms-auto">לחיצה על מקום פנוי — להושבה · על מקום תפוס — חשבון / העברה / פינוי</span>
+    </div>
   )
 }

@@ -71,7 +71,9 @@ Owner-only: layout editor, settings, stats. Both roles can run the list and the 
   - **Not busy:** gray, elapsed time only
   - **Busy:** green below 1:30, **yellow** from 1:30, **red** from 1:50, and "over time" after 2:00
 - Tap an occupied table or stool: who sits there and for how long, with **Move** (pick the new table / stools on the map; the 2-hour timer keeps running from the original seating time) and **Free** (they left). ✅
-- Still to come on tap: **Bill asked**, and seating a walk-in on a free table.
+- On an occupied place also: **Bill asked** (dashed outline on the map; the list shows who is next for that table) ✅
+- Tap a free table or stool: seat someone **from the list** here (groups already called first, then the line), or **mark it taken without a name** (walk-ins / tables already full when busy mode starts), with "how many" and "when did they sit" (now / 30 min / 1 h / 1.5 h / 2 h ago) ✅
+- Timers: `src/lib/timers.ts` (tested). Busy mode counts from seating, or from when busy mode started for groups already sitting ✅
 - **Bar stools** are seated individually (for example, a group of 2 takes stools 5–6), so each group at the bar has its own timer.
 - **Suggestion:** when a table is free or has the bill asked, it shows the next group (`src/lib/matching.ts`, tested):
   1. the **first group in line that fits** the table and wants this kind of seat (or "either")
@@ -145,7 +147,7 @@ Types live in `src/types.ts`.
 3. ✅ Staff login + roles
 4. ✅ Staff list: manual add, WhatsApp, hold timer, no-show, seat on the map, "fits now" hints
 5. Guest QR join + live position + leave
-6. Floor map: real layout, timers, bill asked, seating, suggestions
+6. ✅ Floor map: real layout, timers, bill asked, seating, walk-ins, move, free
 7. ✅ Layout editor (move / add / remove tables, seats, shape)
 8. Settings, QR poster, End of night, anonymous stats
 9. Deploy to Vercel, print the QR, real-night test

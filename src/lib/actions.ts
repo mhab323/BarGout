@@ -1,5 +1,5 @@
 /** Everything staff can do to the list, as small Firestore writes. */
-import { addDoc, serverTimestamp, setDoc, updateDoc, type FieldValue } from 'firebase/firestore'
+import { addDoc, serverTimestamp, setDoc, Timestamp, updateDoc, type FieldValue } from 'firebase/firestore'
 
 import { partiesCol, partyRef, queueRef, settingsRef, layoutRef } from '@/lib/db'
 import { DEFAULT_LAYOUT, DEFAULT_SETTINGS } from '@/lib/defaults'
@@ -62,6 +62,37 @@ export const seatGroup = (id: string, spotIds: string[], busyMode: boolean) =>
     timeLimited: busyMode,
     limitStartAt: busyMode ? serverTimestamp() : null,
   })
+
+/**
+ * People who sat down without the list (walk-ins, or tables already full when busy mode starts).
+ * `minutesAgo` = when they sat down; 0 = now.
+ */
+export function seatWalkIn(opts: { size: number; spotIds: string[]; minutesAgo: number; busyMode: boolean }) {
+  const when = opts.minutesAgo > 0 ? Timestamp.fromMillis(Date.now() - opts.minutesAgo * 60000) : serverTimestamp()
+  const party: Writable<Omit<Party, 'id'>> = {
+    name: '',
+    size: opts.size,
+    phone: null,
+    pref: 'any',
+    source: 'staff',
+    status: 'seated',
+    guestUid: null,
+    note: null,
+    joinedAt: when,
+    notifiedAt: null,
+    seatedAt: when,
+    billAt: null,
+    endedAt: null,
+    spotIds: opts.spotIds,
+    timeLimited: opts.busyMode,
+    limitStartAt: null,
+  }
+  return addDoc(partiesCol, party as unknown as Party)
+}
+
+/** The table asked for the bill (it will be free soon). Tap again to undo. */
+export const setBillAsked = (id: string, asked: boolean) =>
+  updateDoc(partyRef(id), { billAt: asked ? serverTimestamp() : null })
 
 /** Move a seated group to another table / other stools. Their timer keeps running (seatedAt stays). */
 export const moveGroup = (id: string, spotIds: string[]) => updateDoc(partyRef(id), { spotIds })

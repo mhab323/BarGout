@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore'
 import { describe, expect, it } from 'vitest'
 
-import { freeStoolRuns, longestFreeRun, pickStools, rankCandidates } from '@/lib/matching'
+import { freeStoolRuns, longestFreeRun, pickStools, rankCandidates, stoolsFrom } from '@/lib/matching'
 import type { Party, SeatingPref } from '@/types'
 
 let minute = 0
@@ -100,5 +100,14 @@ describe('bar stools', () => {
     expect(pickStools(stools, occupied, 2)).toEqual([1, 2])
     expect(pickStools(stools, occupied, 3)).toEqual([5, 6, 7])
     expect(pickStools(stools, occupied, 4)).toBeNull()
+  })
+  it('walk-ins at the bar: takes the tapped stool and the free ones next to it', () => {
+    const occupied = new Set([1, 2, 8])
+    expect(stoolsFrom(stools, occupied, 5, 1)).toEqual([5])
+    expect(stoolsFrom(stools, occupied, 5, 2)).toEqual([5, 6])
+    // near the end of a free row it takes the stools before
+    expect(stoolsFrom(stools, occupied, 7, 3)).toEqual([5, 6, 7])
+    // row 3-7 has only 5 stools
+    expect(stoolsFrom(stools, occupied, 4, 6)).toBeNull()
   })
 })
