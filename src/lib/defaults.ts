@@ -30,7 +30,7 @@ const table = (n: number, seats: number, cx: number, cy: number, shape: TableSpo
  * - centre: Π-shaped bar, 12 stools (1-4 right side bottom-up, 5-8 along the top
  *   right-to-left, 9-12 left side top-down)
  * - right: tables 1, 2, 3 (2 seats each)
- * - left room, behind a wall with a passage: 11, 8, 9 (4), 6 (3), 7, 10 (2), and 4, 5 (4) by the wall
+ * - left of the front wall (entrance in the gap): 11, 8, 9 (4), 6 (3), 7, 10 (2); inside by the wall: 4, 5 (4)
  * Total: 12 + 5x4 + 3 + 5x2 = 45 seats.
  */
 export const DEFAULT_LAYOUT: FloorLayout = {
@@ -79,7 +79,8 @@ export const DEFAULT_LAYOUT: FloorLayout = {
   decor: [
     { id: 'wall-top', type: 'wall', x: 26.2, y: 0, w: 0.6, h: 16.5 },
     { id: 'wall-bottom', type: 'wall', x: 26.2, y: 23.5, w: 0.6, h: 18.5 },
-    { id: 'passage', type: 'label', x: 24, y: 18, w: 5, h: 4, text: 'מעבר' },
+    { id: 'entrance', type: 'door', x: 25.7, y: 16.8, w: 1.6, h: 6.4 },
+    { id: 'entrance-label', type: 'label', x: 28.5, y: 18, w: 5.5, h: 4, text: 'כניסה' },
   ],
 }
 

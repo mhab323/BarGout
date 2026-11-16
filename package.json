@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "emulators": "firebase emulators:start --only auth,firestore --project demo-bargout",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-bargout \"vitest run tests/rules\"",
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "test": "vitest run tests/unit"
   },
   "dependencies": {
     "@fontsource-variable/frank-ruhl-libre": "^5.3.0",

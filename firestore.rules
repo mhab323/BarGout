@@ -1,0 +1,154 @@
+rules_version = '2';
+
+// BarGout security rules.
+// Guests (anonymous auth, from the QR code) may only add themselves while QR join is open,
+// read their own entry, and leave the list. They never see anyone else's name or phone.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function staffPath() {
+      return /databases/$(database)/documents/staff/$(request.auth.uid);
+    }
+
+    function isStaff() {
+      return signedIn() && exists(staffPath());
+    }
+
+    function isOwner() {
+      return isStaff() && get(staffPath()).data.role == 'owner';
+    }
+
+    function queue() {
+      return get(/databases/$(database)/documents/public/queue).data;
+    }
+
+    function isText(v, min, max) {
+      return v is string && v.size() >= min && v.size() <= max;
+    }
+
+    function isPhone(v) {
+      return v is string && v.matches('^[0-9]{8,15}$');
+    }
+
+    function validPref(v) {
+      return v in ['bar', 'table', 'any'];
+    }
+
+    function validStatus(v) {
+      return v in ['waiting', 'notified', 'seated', 'done', 'no_show', 'left'];
+    }
+
+    // Shape every party document must have, whoever writes it.
+    function validParty(d) {
+      return d.keys().hasOnly([
+          'name', 'size', 'phone', 'pref', 'source', 'status', 'guestUid', 'note',
+          'joinedAt', 'notifiedAt', 'seatedAt', 'billAt', 'endedAt',
+          'spotIds', 'timeLimited', 'limitStartAt'
+        ])
+        && d.keys().hasAll(['name', 'size', 'pref', 'source', 'status', 'joinedAt', 'spotIds'])
+        && isText(d.name, 0, 40)
+        && d['size'] is int && d['size'] >= 1 && d['size'] <= 45
+        && (d.get('phone', null) == null || isPhone(d.phone))
+        && validPref(d.pref)
+        && d.source in ['staff', 'qr']
+        && validStatus(d.status)
+        && d.joinedAt is timestamp
+        && d.spotIds is list && d.spotIds.size() <= 12;
+    }
+
+    // A guest adding themselves from the QR page.
+    function guestCanJoin(id) {
+      let d = request.resource.data;
+      return signedIn()
+        && id == request.auth.uid                  // one entry per phone
+        && queue().qrJoinOpen == true              // only while QR join is open
+        && validParty(d)
+        && d.keys().hasOnly([
+             'name', 'size', 'phone', 'pref', 'source', 'status', 'guestUid', 'note',
+             'joinedAt', 'notifiedAt', 'seatedAt', 'billAt', 'endedAt',
+             'spotIds', 'timeLimited', 'limitStartAt'
+           ])
+        && isText(d.name, 1, 40)
+        && d['size'] <= 12
+        && isPhone(d.phone)
+        && d.source == 'qr'
+        && d.status == 'waiting'
+        && d.guestUid == request.auth.uid
+        && d.note == null
+        && d.joinedAt == request.time
+        && d.notifiedAt == null && d.seatedAt == null && d.billAt == null && d.endedAt == null
+        && d.spotIds.size() == 0
+        && d.timeLimited == false
+        && d.limitStartAt == null;
+    }
+
+    // A guest tapping "leave the list" on their own entry.
+    function guestCanLeave(id) {
+      return signedIn()
+        && id == request.auth.uid
+        && resource.data.guestUid == request.auth.uid
+        && resource.data.status in ['waiting', 'notified']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'endedAt'])
+        && request.resource.data.status == 'left'
+        && request.resource.data.endedAt == request.time;
+    }
+
+    // ---------- collections ----------
+
+    // Who is staff. Created by the owner (the first owner doc is created once in the console).
+    match /staff/{uid} {
+      allow read: if isOwner() || (signedIn() && request.auth.uid == uid);
+      allow write: if isOwner();
+    }
+
+    // Settings are needed by the guest page (2-hour note, max group size): readable by all.
+    match /config/settings {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /config/layout {
+      allow read: if isStaff();
+      allow write: if isOwner();
+    }
+
+    // Live, name-free state the guest page reads: queue order, QR open, busy mode.
+    match /public/queue {
+      allow read: if true;
+      allow write: if isStaff()
+        && request.resource.data.keys().hasOnly(['order', 'qrJoinOpen', 'busyMode', 'busySince', 'updatedAt'])
+        && request.resource.data.order is list
+        && request.resource.data.qrJoinOpen is bool
+        && request.resource.data.busyMode is bool;
+    }
+
+    match /parties/{id} {
+      // A guest's entry id is their anonymous uid, so they can watch it even before it exists.
+      allow read: if isStaff() || (signedIn() && id == request.auth.uid);
+      allow create: if (isStaff() && validParty(request.resource.data))
+        || guestCanJoin(id);
+      allow update: if (isStaff() && validParty(request.resource.data))
+        || guestCanLeave(id);
+      allow delete: if isStaff();
+    }
+
+    // Anonymous stats written at "End of night". No names, no phones.
+    match /history/{id} {
+      allow read: if isOwner();
+      allow create: if isStaff()
+        && !request.resource.data.keys().hasAny(['name', 'phone', 'guestUid', 'note']);
+      allow update, delete: if isOwner();
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -64,7 +64,7 @@ export function FloorMap({ layout, status = {}, selected = [], onSpotClick, clas
             y={d.y + d.h / 2}
             textAnchor="middle"
             dominantBaseline="central"
-            className="fill-muted-foreground text-[1.6px]"
+            className="fill-primary text-[1.6px] font-semibold"
           >
             {d.text}
           </text>
@@ -76,7 +76,7 @@ export function FloorMap({ layout, status = {}, selected = [], onSpotClick, clas
               width={d.w}
               height={d.h}
               rx={0.2}
-              className={d.type === 'wall' ? 'fill-foreground/70' : 'fill-primary/60'}
+              className={d.type === 'wall' ? 'fill-foreground/70' : 'fill-primary/15 stroke-primary stroke-[0.25] [stroke-dasharray:0.6_0.4]'}
             />
             {d.text && (
               <text
