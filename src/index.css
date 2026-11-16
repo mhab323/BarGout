@@ -1,61 +1,66 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@fontsource-variable/heebo";
+@import "@fontsource-variable/frank-ruhl-libre";
 
 @custom-variant dark (&:is(.dark *));
 
-/* Wine-bar palette on top of the shadcn token set */
+/* Brand: taken from the BarGout logo - burgundy #720F22 on white, classic serif wordmark */
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.985 0.004 20);
-  --foreground: oklch(0.2 0.02 15);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.02 15);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.02 15);
-  --primary: oklch(0.36 0.11 5);
-  --primary-foreground: oklch(0.98 0.005 20);
-  --secondary: oklch(0.95 0.01 20);
-  --secondary-foreground: oklch(0.25 0.03 15);
-  --muted: oklch(0.95 0.008 20);
-  --muted-foreground: oklch(0.5 0.02 15);
-  --accent: oklch(0.94 0.02 20);
-  --accent-foreground: oklch(0.25 0.03 15);
-  --destructive: oklch(0.58 0.22 27);
-  --border: oklch(0.9 0.01 20);
-  --input: oklch(0.9 0.01 20);
-  --ring: oklch(0.36 0.11 5);
+  --brand: #720f22;
+  --background: #ffffff;
+  --foreground: #2a1016;
+  --card: #ffffff;
+  --card-foreground: #2a1016;
+  --popover: #ffffff;
+  --popover-foreground: #2a1016;
+  --primary: #720f22;
+  --primary-foreground: #ffffff;
+  --secondary: #f6eff1;
+  --secondary-foreground: #4a1a24;
+  --muted: #f8f4f5;
+  --muted-foreground: #7b6268;
+  --accent: #f4e6e9;
+  --accent-foreground: #720f22;
+  --destructive: #c62828;
+  --border: #ecdfe2;
+  --input: #e3d3d7;
+  --ring: #720f22;
 
-  /* Table timer states */
-  --timer-ok: oklch(0.62 0.15 150);
-  --timer-warn: oklch(0.8 0.15 85);
-  --timer-late: oklch(0.6 0.21 28);
-  --timer-idle: oklch(0.7 0.01 20);
+  /* Table timer states - kept clearly different from the brand burgundy */
+  --timer-ok: #2e9d5b;
+  --timer-warn: #e3a21a;
+  --timer-late: #e0442e;
+  --timer-idle: #b9a9ad;
 }
 
 .dark {
-  --background: oklch(0.17 0.015 15);
-  --foreground: oklch(0.96 0.005 20);
-  --card: oklch(0.21 0.018 15);
-  --card-foreground: oklch(0.96 0.005 20);
-  --popover: oklch(0.21 0.018 15);
-  --popover-foreground: oklch(0.96 0.005 20);
-  --primary: oklch(0.72 0.12 10);
-  --primary-foreground: oklch(0.17 0.015 15);
-  --secondary: oklch(0.27 0.02 15);
-  --secondary-foreground: oklch(0.96 0.005 20);
-  --muted: oklch(0.27 0.02 15);
-  --muted-foreground: oklch(0.7 0.015 20);
-  --accent: oklch(0.3 0.025 15);
-  --accent-foreground: oklch(0.96 0.005 20);
-  --destructive: oklch(0.65 0.2 25);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.72 0.12 10);
+  --brand: #e7a3b0;
+  --background: #170a0d;
+  --foreground: #f6eef0;
+  --card: #211015;
+  --card-foreground: #f6eef0;
+  --popover: #211015;
+  --popover-foreground: #f6eef0;
+  --primary: #b8314b;
+  --primary-foreground: #ffffff;
+  --secondary: #2e161c;
+  --secondary-foreground: #f6eef0;
+  --muted: #2a141a;
+  --muted-foreground: #c2a8ae;
+  --accent: #3a1a22;
+  --accent-foreground: #f6eef0;
+  --destructive: #ef5350;
+  --border: rgb(255 255 255 / 0.1);
+  --input: rgb(255 255 255 / 0.15);
+  --ring: #b8314b;
 }
 
 @theme inline {
   --font-sans: "Heebo Variable", system-ui, sans-serif;
+  --font-serif: "Frank Ruhl Libre Variable", "Times New Roman", serif;
+  --color-brand: var(--brand);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -92,6 +97,11 @@
   body,
   #root {
     @apply h-full;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-serif font-medium text-brand;
   }
   body {
     @apply bg-background text-foreground antialiased;

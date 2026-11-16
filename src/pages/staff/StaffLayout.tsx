@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router'
 import { LayoutGrid, ListOrdered, Settings } from 'lucide-react'
 
+import { Wordmark } from '@/components/brand/Wordmark'
 import { cn } from '@/lib/utils'
 
 const tabs = [
@@ -12,6 +13,9 @@ const tabs = [
 export function StaffLayout() {
   return (
     <div className="flex h-full flex-col">
+      <header className="flex items-center justify-center border-b bg-card px-4 pt-[env(safe-area-inset-top)]">
+        <Wordmark className="py-3 text-3xl" />
+      </header>
       <main className="flex-1 overflow-y-auto">
         <Outlet />
       </main>

@@ -84,6 +84,21 @@ Owner-only: layout editor, settings, stats. Both roles can run the list and the 
 - **End of night**
 - **Stats** (later)
 
+## Brand
+
+The app follows the BarGout logo (`docs/brand/logo-original.png`).
+
+| Token | Value | Use |
+|---|---|---|
+| Burgundy | `#720F22` | logo color, primary buttons, headings, active tab, app icon |
+| White | `#FFFFFF` | background, same as the logo |
+| Wordmark | Frank Ruhl Libre, weight 460, wide letter-spacing | "BarGout" in the header and on the guest page, rebuilt as text so it stays sharp |
+| Headings | Frank Ruhl Libre (Hebrew serif) | matches the logo's classic serif |
+| Body / UI | Heebo | easy to read quickly on a busy night |
+| Timer colors | green `#2E9D5B`, yellow `#E3A21A`, red `#E0442E` | kept clearly different from the burgundy, so "late" never looks like "brand" |
+
+App icon: a burgundy tile with a white serif "B".
+
 ## Rules and decisions
 
 - **Two-hour limit counting.** A group seated while busy mode is on counts from its seating time. If busy mode turns on later, groups already sitting count from the moment busy mode started, since they weren't told before. This is stored as `limitStartAt`.
