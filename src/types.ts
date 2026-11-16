@@ -17,32 +17,39 @@ import type { Timestamp } from 'firebase/firestore'
 export type SpotShape = 'square' | 'round' | 'rect'
 
 /** A table on the floor map. Coordinates are in grid units on the layout canvas. */
-export interface TableSpot {
+export interface TableSpot extends Rect {
   id: string // e.g. "T1"
   kind: 'table'
-  label: string // shown on the map, e.g. "1"
+  label: string // the table number the staff use, e.g. "1"
   seats: number // normal capacity
   shape: SpotShape
-  x: number
-  y: number
-  w: number
-  h: number
-  rotation: 0 | 90
 }
 
-/** The bar counter: one shape with N individual seats along it. */
-export interface BarSpot {
-  id: string // e.g. "BAR"
-  kind: 'bar'
-  label: string
-  seats: number // 12
+/** A rectangle in grid units. */
+export interface Rect {
   x: number
   y: number
   w: number
   h: number
-  rotation: 0 | 90
-  /** Which long side the stools are on (in canvas coordinates, before rotation). */
-  seatSide: 'top' | 'bottom'
+}
+
+/** One bar stool. Seat numbers are the ones the staff use (1-12). Position is the stool centre. */
+export interface BarStool {
+  n: number
+  x: number
+  y: number
+}
+
+/**
+ * The bar counter. Any shape (straight, L, U, Π): the counter is drawn from rectangles,
+ * and every stool has its own position, so groups at the bar get their own timers.
+ */
+export interface BarSpot {
+  id: string // "BAR"
+  kind: 'bar'
+  label: string
+  segments: Rect[]
+  stools: BarStool[]
 }
 
 export type FloorSpot = TableSpot | BarSpot
@@ -56,18 +63,16 @@ export interface FloorLayout {
   decor: LayoutDecor[]
 }
 
-export interface LayoutDecor {
+export interface LayoutDecor extends Rect {
   id: string
   type: 'wall' | 'door' | 'label'
-  x: number
-  y: number
-  w: number
-  h: number
   text?: string
 }
 
-/** Seat id at the bar, e.g. "BAR:3" (1-based). */
+/** Seat id at the bar, e.g. "BAR:3" (the stool number). Tables use their own id, e.g. "T5". */
 export type BarSeatId = `${string}:${number}`
+
+export const barSeatId = (barId: string, n: number): BarSeatId => `${barId}:${n}`
 
 // ---------- Parties (groups) ----------
 

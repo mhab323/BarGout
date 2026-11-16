@@ -16,39 +16,73 @@ export const DEFAULT_SETTINGS: Omit<Settings, 'busySince'> = {
   },
 }
 
-const table = (
-  n: number,
-  seats: number,
-  x: number,
-  y: number,
-  shape: TableSpot['shape'] = 'square',
-): TableSpot => {
-  const size = seats >= 4 ? 10 : seats === 3 ? 9 : 7
-  return { id: `T${n}`, kind: 'table', label: String(n), seats, shape, x, y, w: size, h: size, rotation: 0 }
+/** Standard table sizes (grid units) by capacity. */
+const TABLE_SIZE: Record<number, number> = { 2: 5.5, 3: 6, 4: 7 }
+
+/** A table centred on (cx, cy). */
+const table = (n: number, seats: number, cx: number, cy: number, shape: TableSpot['shape'] = 'square'): TableSpot => {
+  const size = TABLE_SIZE[seats] ?? 7
+  return { id: `T${n}`, kind: 'table', label: String(n), seats, shape, x: cx - size / 2, y: cy - size / 2, w: size, h: size }
 }
 
 /**
- * Placeholder floor plan: 12 bar seats, 5 tables of 4, 1 table of 3, 5 tables of 2 = 45 seats.
- * Positions are generic until they are arranged to match the real room in the layout editor.
+ * The real room, traced from the owner's hand drawing:
+ * - centre: Π-shaped bar, 12 stools (1-3 right side bottom-up, 4 top-right corner,
+ *   5-7 along the top right-to-left, 8 top-left corner, 9-12 left side top-down)
+ * - right: tables 1, 2, 3 (2 seats each)
+ * - left room, behind a wall with a passage: 11, 8, 9 (4), 6 (3), 7, 10 (2), and 4, 5 (4) by the wall
+ * Total: 12 + 5x4 + 3 + 5x2 = 45 seats.
  */
 export const DEFAULT_LAYOUT: FloorLayout = {
   width: 100,
-  height: 70,
+  height: 42,
   spots: [
-    { id: 'BAR', kind: 'bar', label: 'בר', seats: 12, x: 8, y: 4, w: 64, h: 7, rotation: 0, seatSide: 'bottom' },
-    table(1, 4, 8, 24),
-    table(2, 4, 24, 24),
-    table(3, 4, 40, 24),
-    table(4, 4, 56, 24),
-    table(5, 4, 72, 24),
-    table(6, 3, 84, 8, 'round'),
-    table(7, 2, 10, 50),
-    table(8, 2, 26, 50),
-    table(9, 2, 42, 50),
-    table(10, 2, 58, 50),
-    table(11, 2, 74, 50),
+    {
+      id: 'BAR',
+      kind: 'bar',
+      label: 'בר',
+      segments: [
+        { x: 43, y: 7.5, w: 28.5, h: 7 }, // top
+        { x: 43, y: 14.5, w: 7.5, h: 21.5 }, // left leg
+        { x: 64, y: 14.5, w: 7.5, h: 22 }, // right leg
+      ],
+      stools: [
+        { n: 1, x: 74.2, y: 33 },
+        { n: 2, x: 74.2, y: 26.5 },
+        { n: 3, x: 74.2, y: 20 },
+        { n: 4, x: 67.8, y: 4.8 },
+        { n: 5, x: 61.5, y: 4.8 },
+        { n: 6, x: 57.2, y: 4.8 },
+        { n: 7, x: 52.9, y: 4.8 },
+        { n: 8, x: 46.7, y: 4.8 },
+        { n: 9, x: 40.3, y: 17.5 },
+        { n: 10, x: 40.3, y: 22.5 },
+        { n: 11, x: 40.3, y: 27.5 },
+        { n: 12, x: 40.3, y: 32.5 },
+      ],
+    },
+    // right side
+    table(1, 2, 88.5, 7.5),
+    table(2, 2, 88.5, 21.5),
+    table(3, 2, 88.5, 35),
+    // by the wall, facing the bar
+    table(4, 4, 32, 10),
+    table(5, 4, 32, 27.5),
+    // left room
+    table(6, 3, 20.5, 9),
+    table(7, 2, 21, 23),
+    table(10, 2, 22, 36.5),
+    table(11, 4, 6.5, 7.5),
+    table(8, 4, 6.5, 21.5),
+    table(9, 4, 7.5, 34),
   ],
-  decor: [{ id: 'door', type: 'door', x: 88, y: 62, w: 10, h: 3, text: 'כניסה' }],
+  decor: [
+    { id: 'wall-top', type: 'wall', x: 26.2, y: 0, w: 0.6, h: 16.5 },
+    { id: 'wall-bottom', type: 'wall', x: 26.2, y: 23.5, w: 0.6, h: 18.5 },
+    { id: 'passage', type: 'label', x: 24, y: 18, w: 5, h: 4, text: 'מעבר' },
+  ],
 }
 
-export const totalSeats = (layout: FloorLayout) => layout.spots.reduce((sum, s) => sum + s.seats, 0)
+export const spotSeats = (spot: FloorLayout['spots'][number]) => (spot.kind === 'bar' ? spot.stools.length : spot.seats)
+
+export const totalSeats = (layout: FloorLayout) => layout.spots.reduce((sum, s) => sum + spotSeats(s), 0)
