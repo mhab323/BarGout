@@ -6,10 +6,9 @@
  * its place and gets the next table that fits them.
  *
  * Ranking for one free spot (only groups still "waiting", not already called):
- *   1. wants this kind of seat (or "either") AND fits well  (does not waste seats)
- *   2. wants this kind of seat (or "either") AND fits        (table a bit too big)
- *   3. asked for the other kind of seat but fits             (shown as an option only)
- * Inside each tier: first come, first served.
+ *   1. wants this kind of seat (or "either") AND fits   -> first come, first served
+ *      (a couple first in line gets a free table for 4 - owner's decision)
+ *   2. asked for the other kind of seat but fits        -> shown as an option only
  */
 import type { Party, SeatingPref } from '@/types'
 
@@ -18,7 +17,7 @@ export type FreeSpot =
   /** freeRun = longest row of free stools next to each other */
   | { kind: 'bar'; freeRun: number }
 
-export type MatchReason = 'best' | 'fits' | 'other-pref'
+export type MatchReason = 'fits' | 'other-pref'
 
 export interface Candidate {
   party: Party
@@ -27,22 +26,16 @@ export interface Candidate {
 
 const prefMatches = (pref: SeatingPref, kind: FreeSpot['kind']) => pref === 'any' || pref === kind
 
-/** At most one empty chair: a group of 3-4 at a 4-table, 1-2 at a 2-table, 2-3 at the 3-table. */
-const fitsWell = (size: number, seats: number) => size <= seats && size >= seats - 1
-
 function capacity(spot: FreeSpot) {
   return spot.kind === 'table' ? spot.seats : spot.freeRun
 }
 
 function tierOf(party: Party, spot: FreeSpot): MatchReason | null {
   if (party.size > capacity(spot)) return null
-  if (!prefMatches(party.pref, spot.kind)) return 'other-pref'
-  // At the bar any row of free stools that is long enough is a good fit.
-  if (spot.kind === 'bar') return 'best'
-  return fitsWell(party.size, spot.seats) ? 'best' : 'fits'
+  return prefMatches(party.pref, spot.kind) ? 'fits' : 'other-pref'
 }
 
-const tierRank: Record<MatchReason, number> = { best: 0, fits: 1, 'other-pref': 2 }
+const tierRank: Record<MatchReason, number> = { fits: 0, 'other-pref': 1 }
 
 /** Waiting groups sorted by who joined first. */
 export function inLineOrder(parties: Party[]): Party[] {

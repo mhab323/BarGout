@@ -72,12 +72,11 @@ Owner-only: layout editor, settings, stats. Both roles can run the list and the 
   - **Busy:** green below 1:30, **yellow** from 1:30, **red** from 1:50, and "over time" after 2:00
 - Tap a table to see actions: **Seat group** (picks from the list), **Bill asked**, **Free table**.
 - **Bar stools** are seated individually (for example, a group of 2 takes stools 5–6), so each group at the bar has its own timer.
-- **Suggestion:** when a table is free or has the bill asked, it shows the best next group (`src/lib/matching.ts`, tested):
-  1. groups that want this kind of seat (or "either") **and fill it well** (at most one empty chair)
-  2. groups that want it and fit, but leave chairs empty
-  3. groups that asked for the other kind of seat (offered as an option only)
+- **Suggestion:** when a table is free or has the bill asked, it shows the next group (`src/lib/matching.ts`, tested):
+  1. the **first group in line that fits** the table and wants this kind of seat (or "either")
+  2. groups that asked for the other kind of seat (offered as an option only)
 
-  Inside each tier it's first come, first served. So **a table for 2 goes to the first couple in line even if a group of 4 is first**; the 4 keep their place for the next 4-table. Groups already called (notified) are not suggested again.
+  So **a table for 2 goes to the first couple in line even if a group of 4 is first**, and a table for 4 goes to whoever is first and fits, **even a couple** (owner's decision). Groups already called (notified) are not suggested again.
 - **Bar stools** for a group are picked from the smallest free row of stools that fits, keeping long rows free for bigger groups.
 
 ### Staff — Settings (`/staff/settings`)
@@ -85,7 +84,7 @@ Owner-only: layout editor, settings, stats. Both roles can run the list and the 
 - Toggles: **Busy mode**, **QR join open**
 - Numbers: table limit (120), yellow at (90), red at (110), hold minutes (10), max group size on QR (6), country code (972)
 - Message texts (Hebrew, editable): table ready and time-limit note
-- **Layout editor** (owner): drag tables on a grid, set the shape (square/round/rect), seats, label, rotation, and the bar's stool count. Walls, door, and labels can be added so the map looks like the room.
+- **Layout editor** — on the map tab, "עריכת מפה" (any staff, so it works from the tablet): drag tables to move them (e.g. from inside to outside), tap a table to change its number, seats (1–8) or shape (square / round / long), add a table (placed in an empty spot), remove a table (not while people sit there), reset to the original drawing. Changes are a draft until "שמירה"; duplicate table numbers block saving.
 - **QR code**: show and print the join QR
 - **End of night**
 - **Stats** (later)
@@ -118,7 +117,7 @@ App icon: a burgundy tile with a white serif "B".
 | Path | What | Who can read / write |
 |---|---|---|
 | `config/settings` | `Settings` | staff read, owner write |
-| `config/layout` | `FloorLayout`: tables, bar, decor with positions | staff read, owner write |
+| `config/layout` | `FloorLayout`: tables, bar, decor with positions | staff read and write (moving tables) |
 | `parties/{id}` | `Party`: one group, from joining to leaving | staff read/write. A guest can create one (only when QR join is open), read it, and set it to `left` |
 | `public/queue` | `PublicQueue`: ordered party ids, QR open, busy — **no names** | anyone reads, staff writes |
 | `staff/{uid}` | `StaffMember`: role `owner` or `staff` | owner manages |
@@ -146,7 +145,7 @@ Types live in `src/types.ts`.
 4. ✅ Staff list: manual add, WhatsApp, hold timer, no-show, seat on the map, "fits now" hints
 5. Guest QR join + live position + leave
 6. Floor map: real layout, timers, bill asked, seating, suggestions
-7. Layout editor
+7. ✅ Layout editor (move / add / remove tables, seats, shape)
 8. Settings, QR poster, End of night, anonymous stats
 9. Deploy to Vercel, print the QR, real-night test
 

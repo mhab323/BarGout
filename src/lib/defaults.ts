@@ -79,6 +79,8 @@ export const DEFAULT_LAYOUT: FloorLayout = {
     { id: 'wall-bottom', type: 'wall', x: 26.2, y: 23.5, w: 0.6, h: 18.5 },
     { id: 'entrance', type: 'door', x: 25.7, y: 16.8, w: 1.6, h: 6.4 },
     { id: 'entrance-label', type: 'label', x: 28.5, y: 18, w: 5.5, h: 4, text: 'כניסה' },
+    { id: 'zone-outside', type: 'zone', x: 8, y: 39.5, w: 10, h: 2.5, text: 'בחוץ' },
+    { id: 'zone-inside', type: 'zone', x: 58, y: 39.5, w: 10, h: 2.5, text: 'בפנים' },
   ],
 }
 

@@ -3,7 +3,7 @@ import { addDoc, serverTimestamp, setDoc, updateDoc, type FieldValue } from 'fir
 
 import { partiesCol, partyRef, queueRef, settingsRef, layoutRef } from '@/lib/db'
 import { DEFAULT_LAYOUT, DEFAULT_SETTINGS } from '@/lib/defaults'
-import type { Party, SeatingPref } from '@/types'
+import type { FloorLayout, Party, SeatingPref } from '@/types'
 
 type Writable<T> = { [K in keyof T]: T[K] | FieldValue }
 
@@ -84,6 +84,11 @@ export const setQrJoinOpen = (on: boolean) =>
 /** Keep the public, name-free order in sync so guests see their live place in line. */
 export const syncQueueOrder = (order: string[]) =>
   setDoc(queueRef, { order, updatedAt: serverTimestamp() } as never, { merge: true })
+
+// ---------- floor plan ----------
+
+/** Save the edited floor plan (tables moved inside/outside, added, removed). */
+export const saveLayout = (layout: FloorLayout) => setDoc(layoutRef, layout)
 
 // ---------- first run (owner) ----------
 

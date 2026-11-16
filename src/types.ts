@@ -65,7 +65,8 @@ export interface FloorLayout {
 
 export interface LayoutDecor extends Rect {
   id: string
-  type: 'wall' | 'door' | 'label'
+  /** zone = a quiet area name like "בחוץ" / "בפנים" */
+  type: 'wall' | 'door' | 'label' | 'zone'
   text?: string
 }
 

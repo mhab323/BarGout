@@ -152,7 +152,8 @@ describe('guests (QR page)', () => {
     await assertFails(updateDoc(doc(as(GUEST), 'config', 'settings'), { busyMode: false }))
   })
 
-  it('cannot read the layout, staff list or stats', async () => {
+  it('cannot read or change the layout, staff list or stats', async () => {
+    await assertFails(setDoc(doc(as(GUEST), 'config', 'layout'), { spots: [] }))
     await assertFails(getDoc(doc(as(GUEST), 'config', 'layout')))
     await assertFails(getDoc(doc(as(GUEST), 'staff', OWNER)))
     await assertFails(getDoc(doc(as(GUEST), 'history', 'h1')))
@@ -179,9 +180,12 @@ describe('staff (tablets)', () => {
     await assertSucceeds(updateDoc(doc(as(STAFF), 'public', 'queue'), { qrJoinOpen: true, busyMode: true }))
   })
 
-  it('cannot change settings, layout or staff (owner only)', async () => {
+  it('can move tables (save the floor plan)', async () => {
+    await assertSucceeds(setDoc(doc(as(STAFF), 'config', 'layout'), { spots: [] }))
+  })
+
+  it('cannot change settings or staff (owner only)', async () => {
     await assertFails(updateDoc(doc(as(STAFF), 'config', 'settings'), { holdMinutes: 30 }))
-    await assertFails(setDoc(doc(as(STAFF), 'config', 'layout'), { spots: [] }))
     await assertFails(setDoc(doc(as(STAFF), 'staff', 'x'), { role: 'owner', name: 'x' }))
   })
 

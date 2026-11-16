@@ -33,7 +33,7 @@ export function WaitlistPage() {
     if (counter) {
       const run = longestFreeRun(counter.stools.map((s) => s.n), occupiedStools(counter, occupied))
       const best = rankCandidates({ kind: 'bar', freeRun: run }, bar.list).find(
-        (c) => c.reason === 'best' && !result.has(c.party.id),
+        (c) => c.reason === 'fits' && !result.has(c.party.id),
       )
       if (best) result.set(best.party.id, 'מתאים עכשיו: בר')
     }

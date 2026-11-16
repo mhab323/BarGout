@@ -35,20 +35,16 @@ describe('table freeing up', () => {
     expect(names(ranked)).toEqual(['Levi (2)', 'Mizrahi (2)'])
   })
 
-  it('a table for 4 goes to the first group that fills it, not a couple that would waste 2 chairs', () => {
+  it('a table for 4 goes to the first group in line that fits, even a couple', () => {
     const line = [group('Levi (2)', 2), group('Cohen (4)', 4)]
     const ranked = rankCandidates({ kind: 'table', seats: 4 }, line)
-    expect(ranked[0].party.name).toBe('Cohen (4)')
-    expect(ranked[0].reason).toBe('best')
-    // the couple is still offered as a second option
-    expect(ranked[1]).toMatchObject({ reason: 'fits' })
-    expect(ranked[1].party.name).toBe('Levi (2)')
+    expect(names(ranked)).toEqual(['Levi (2)', 'Cohen (4)'])
+    expect(ranked[0].reason).toBe('fits')
   })
 
-  it('if nobody fills the table well, the first group that fits gets it', () => {
-    const line = [group('Levi (2)', 2), group('Dahan (1)', 1)]
-    const ranked = rankCandidates({ kind: 'table', seats: 4 }, line)
-    expect(ranked[0].party.name).toBe('Levi (2)')
+  it('a group of 4 first in line gets the table for 4', () => {
+    const line = [group('Cohen (4)', 4), group('Levi (2)', 2)]
+    expect(rankCandidates({ kind: 'table', seats: 4 }, line)[0].party.name).toBe('Cohen (4)')
   })
 
   it('groups that are too big are never suggested', () => {
@@ -56,9 +52,9 @@ describe('table freeing up', () => {
     expect(names(rankCandidates({ kind: 'table', seats: 3 }, line))).toEqual([])
   })
 
-  it('a group of 3 fits the table for 3 well', () => {
+  it('the table for 3 skips a group of 4 and goes to the first group that fits', () => {
     const line = [group('Cohen (4)', 4), group('Peretz (3)', 3)]
-    expect(rankCandidates({ kind: 'table', seats: 3 }, line)[0]).toMatchObject({ reason: 'best' })
+    expect(rankCandidates({ kind: 'table', seats: 3 }, line)[0].party.name).toBe('Peretz (3)')
   })
 
   it('groups that asked for the bar come last for a table, as an option only', () => {

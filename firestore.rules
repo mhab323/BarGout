@@ -113,9 +113,10 @@ service cloud.firestore {
       allow write: if isOwner();
     }
 
+    // Floor plan: any staff member can move tables (e.g. inside -> outside) from the tablet.
     match /config/layout {
       allow read: if isStaff();
-      allow write: if isOwner();
+      allow write: if isStaff();
     }
 
     // Live, name-free state the guest page reads: queue order, QR open, busy mode.
