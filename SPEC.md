@@ -55,7 +55,10 @@ Owner-only: layout editor, settings, stats. Both roles can run the list and the 
 
 - **Join form**: name, group size (1–6), WhatsApp number, bar / table / either. It shows the 2-hour note when busy mode is on.
 - **When QR join is off:** "The list is managed at the door — please talk to us 🙂".
-- **After joining:** "You are #3" updates live, with a **Leave the list** button. Guests never see other people's names or numbers.
+- **After joining:** "You are #3" updates live, with a **Leave the list** button. Guests never see other people's names or numbers. ✅
+- **Called:** "המקום שלכם מוכן!" with the hold countdown, as soon as staff tap WhatsApp. ✅
+- **Seated:** "ערב טוב!" (+ the 2-hour note in busy mode). **Left / no-show:** "join again" while QR join is open. ✅
+- The phone number is required on the QR page (it is how we call them). The page loads no third-party scripts.
 
 ### Staff — List (`/staff`)
 
@@ -88,8 +91,8 @@ Owner-only: layout editor, settings, stats. Both roles can run the list and the 
 - Numbers: table limit (120), yellow at (90), red at (110), hold minutes (10), max group size on QR (6), country code (972)
 - Message texts (Hebrew, editable): table ready and time-limit note
 - **Layout editor** — on the map tab, "עריכת מפה" (any staff, so it works from the tablet): drag tables to move them (e.g. from inside to outside), tap a table to change its number, seats (1–8) or shape (square / round / long), add a table (placed in an empty spot), remove a table (not while people sit there), reset to the original drawing. Changes are a draft until "שמירה"; duplicate table numbers block saving.
-- **QR code**: show and print the join QR
-- **End of night**
+- **QR code**: shown in settings, with an A4 poster to print (`/poster`) ✅
+- **End of night** (any staff): every group becomes an anonymous `history` record (times, size, outcome — tested to contain no name / phone / device id), groups are deleted, the queue resets (empty, QR off, busy off) ✅
 - **Stats** (later)
 
 ## Brand
@@ -146,10 +149,10 @@ Types live in `src/types.ts`.
 2. ✅ Data model + `firestore.rules` (24 tests) + emulator setup
 3. ✅ Staff login + roles
 4. ✅ Staff list: manual add, WhatsApp, hold timer, no-show, seat on the map, "fits now" hints
-5. Guest QR join + live position + leave
+5. ✅ Guest QR join + live position + called + leave + rejoin
 6. ✅ Floor map: real layout, timers, bill asked, seating, walk-ins, move, free
 7. ✅ Layout editor (move / add / remove tables, seats, shape)
-8. Settings, QR poster, End of night, anonymous stats
+8. ✅ Settings (times, messages with WhatsApp preview, country code), QR poster, End of night (stats screen later)
 9. Deploy to Vercel, print the QR, real-night test
 
 ## Later

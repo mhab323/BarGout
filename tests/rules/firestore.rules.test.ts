@@ -138,6 +138,29 @@ describe('guests (QR page)', () => {
     )
   })
 
+  it('can join again after leaving the list', async () => {
+    await setDoc(doc(as(GUEST), 'parties', GUEST), guestParty(GUEST))
+    await updateDoc(doc(as(GUEST), 'parties', GUEST), { status: 'left', endedAt: serverTimestamp() })
+    await assertSucceeds(setDoc(doc(as(GUEST), 'parties', GUEST), guestParty(GUEST, { size: 3 })))
+  })
+
+  it('cannot "join again" while still on the list (to reset their place or details)', async () => {
+    await setDoc(doc(as(GUEST), 'parties', GUEST), guestParty(GUEST))
+    await assertFails(setDoc(doc(as(GUEST), 'parties', GUEST), guestParty(GUEST, { size: 4 })))
+  })
+
+  it('cannot join again while seated, or after QR join closed', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'parties', GUEST), { ...guestParty(GUEST), joinedAt: Timestamp.now(), status: 'seated' })
+    })
+    await assertFails(setDoc(doc(as(GUEST), 'parties', GUEST), guestParty(GUEST)))
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'parties', GUEST), { ...guestParty(GUEST), joinedAt: Timestamp.now(), status: 'left' })
+      await updateDoc(doc(ctx.firestore(), 'public', 'queue'), { qrJoinOpen: false })
+    })
+    await assertFails(setDoc(doc(as(GUEST), 'parties', GUEST), guestParty(GUEST)))
+  })
+
   it('cannot change anything else on their entry', async () => {
     await setDoc(doc(as(GUEST), 'parties', GUEST), guestParty(GUEST))
     await assertFails(updateDoc(doc(as(GUEST), 'parties', GUEST), { size: 6 }))

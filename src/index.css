@@ -108,3 +108,15 @@
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/* Posters print edge to edge on A4 */
+@page {
+  size: A4;
+  margin: 0;
+}
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+}

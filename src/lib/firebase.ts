@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { connectAuthEmulator, getAuth } from 'firebase/auth'
+import { browserLocalPersistence, connectAuthEmulator, indexedDBLocalPersistence, initializeAuth } from 'firebase/auth'
 import {
   connectFirestoreEmulator,
   initializeFirestore,
@@ -25,7 +25,12 @@ export const useEmulators = import.meta.env.VITE_USE_EMULATORS === 'true'
 
 export const app = initializeApp(firebaseConfig)
 
-export const auth = getAuth(app)
+/**
+ * Sessions stay on the device (tablets stay signed in). No popup/redirect helper here:
+ * it would load Google's sign-in script on every page, including the guest page.
+ * Google sign-in passes it only when the owner taps that button (see authState.ts).
+ */
+export const auth = initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] })
 
 /** Offline cache so the tablets keep working through short Wi-Fi drops. */
 export const db = initializeFirestore(app, {

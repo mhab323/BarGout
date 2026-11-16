@@ -5,6 +5,7 @@
  */
 import { createContext, useContext } from 'react'
 import {
+  browserPopupRedirectResolver,
   GoogleAuthProvider,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -27,7 +28,7 @@ export const AuthContext = createContext<StaffAuth>({ status: 'loading' })
 export const useStaffAuth = () => useContext(AuthContext)
 
 export function signInWithGoogle() {
-  return signInWithPopup(auth, new GoogleAuthProvider())
+  return signInWithPopup(auth, new GoogleAuthProvider(), browserPopupRedirectResolver)
 }
 
 export function signInWithEmail(email: string, password: string) {

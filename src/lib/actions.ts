@@ -3,7 +3,7 @@ import { addDoc, serverTimestamp, setDoc, Timestamp, updateDoc, type FieldValue 
 
 import { partiesCol, partyRef, queueRef, settingsRef, layoutRef } from '@/lib/db'
 import { DEFAULT_LAYOUT, DEFAULT_SETTINGS } from '@/lib/defaults'
-import type { FloorLayout, Party, SeatingPref } from '@/types'
+import type { FloorLayout, Party, SeatingPref, Settings } from '@/types'
 
 type Writable<T> = { [K in keyof T]: T[K] | FieldValue }
 
@@ -121,6 +121,41 @@ export const setQrJoinOpen = (on: boolean) =>
 /** Keep the public, name-free order in sync so guests see their live place in line. */
 export const syncQueueOrder = (order: string[]) =>
   setDoc(queueRef, { order, updatedAt: serverTimestamp() } as never, { merge: true })
+
+// ---------- guests (QR page) ----------
+
+/**
+ * A guest adds themselves. The entry id is the guest's anonymous uid (one entry per phone);
+ * joining again after leaving overwrites the old entry with a fresh place at the end of the line.
+ */
+export function joinAsGuest(uid: string, group: { name: string; size: number; pref: SeatingPref; phone: string }) {
+  const party: Writable<Omit<Party, 'id'>> = {
+    name: group.name.trim(),
+    size: group.size,
+    phone: group.phone,
+    pref: group.pref,
+    source: 'qr',
+    status: 'waiting',
+    guestUid: uid,
+    note: null,
+    joinedAt: serverTimestamp(),
+    notifiedAt: null,
+    seatedAt: null,
+    billAt: null,
+    endedAt: null,
+    spotIds: [],
+    timeLimited: false,
+    limitStartAt: null,
+  }
+  return setDoc(partyRef(uid), party as unknown as Party)
+}
+
+/** The guest taps "leave the list". */
+export const leaveAsGuest = (uid: string) => updateDoc(partyRef(uid), { status: 'left', endedAt: serverTimestamp() })
+
+// ---------- settings (owner) ----------
+
+export const saveSettings = (settings: Settings) => setDoc(settingsRef, settings)
 
 // ---------- floor plan ----------
 

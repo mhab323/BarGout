@@ -88,6 +88,14 @@ service cloud.firestore {
         && d.limitStartAt == null;
     }
 
+    // A guest who left the list (or was a no-show / already sat and left) joins again later.
+    // Same checks as a new join, so nobody can keep an old place in line.
+    function guestCanRejoin(id) {
+      return resource.data.status in ['left', 'no_show', 'done']
+        && resource.data.guestUid == request.auth.uid
+        && guestCanJoin(id);
+    }
+
     // A guest tapping "leave the list" on their own entry.
     function guestCanLeave(id) {
       return signedIn()
@@ -135,7 +143,8 @@ service cloud.firestore {
       allow create: if (isStaff() && validParty(request.resource.data))
         || guestCanJoin(id);
       allow update: if (isStaff() && validParty(request.resource.data))
-        || guestCanLeave(id);
+        || guestCanLeave(id)
+        || guestCanRejoin(id);
       allow delete: if isStaff();
     }
 
