@@ -11,7 +11,8 @@
     "emulators": "firebase emulators:start --only auth,firestore --project demo-bargout",
     "test:rules": "firebase emulators:exec --only firestore --project demo-bargout \"vitest run tests/rules\"",
     "deploy:rules": "firebase deploy --only firestore:rules",
-    "test": "vitest run tests/unit"
+    "test": "vitest run tests/unit",
+    "dev:emulators": "VITE_USE_EMULATORS=true VITE_FIREBASE_PROJECT_ID=demo-bargout vite"
   },
   "dependencies": {
     "@fontsource-variable/frank-ruhl-libre": "^5.3.0",

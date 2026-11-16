@@ -118,19 +118,18 @@ export interface Party {
 export interface PublicQueue {
   /** Party ids of the active list (waiting + notified), in order. */
   order: string[]
+  /** Guests may join by scanning the QR code. Off = staff adds people manually. */
   qrJoinOpen: boolean
+  /** Busy mode: the 2-hour rule is active and timers turn colored. */
   busyMode: boolean
+  busySince: Timestamp | null
   updatedAt: Timestamp
 }
 
 // ---------- Settings ----------
 
+/** Owner settings. Busy mode and QR join are switched from the tablets, so they live in PublicQueue. */
 export interface Settings {
-  /** Busy mode: the 2-hour rule is active and timers turn colored. */
-  busyMode: boolean
-  busySince: Timestamp | null
-  /** Guests may join by scanning the QR code. Off = staff adds people manually. */
-  qrJoinOpen: boolean
   tableLimitMinutes: number // 120
   warnAtMinutes: number // 90  -> yellow
   lateAtMinutes: number // 110 -> red

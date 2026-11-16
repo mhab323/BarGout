@@ -72,7 +72,13 @@ Owner-only: layout editor, settings, stats. Both roles can run the list and the 
   - **Busy:** green below 1:30, **yellow** from 1:30, **red** from 1:50, and "over time" after 2:00
 - Tap a table to see actions: **Seat group** (picks from the list), **Bill asked**, **Free table**.
 - **Bar stools** are seated individually (for example, a group of 2 takes stools 5–6), so each group at the bar has its own timer.
-- **Suggestion:** when a table is free or has the bill asked, it shows the best next group. That's the first in line that fits the seats and preference, so it may skip a group of 4 to seat a group of 2 at the bar.
+- **Suggestion:** when a table is free or has the bill asked, it shows the best next group (`src/lib/matching.ts`, tested):
+  1. groups that want this kind of seat (or "either") **and fill it well** (at most one empty chair)
+  2. groups that want it and fit, but leave chairs empty
+  3. groups that asked for the other kind of seat (offered as an option only)
+
+  Inside each tier it's first come, first served. So **a table for 2 goes to the first couple in line even if a group of 4 is first**; the 4 keep their place for the next 4-table. Groups already called (notified) are not suggested again.
+- **Bar stools** for a group are picked from the smallest free row of stools that fits, keeping long rows free for bigger groups.
 
 ### Staff — Settings (`/staff/settings`)
 
@@ -135,9 +141,9 @@ Types live in `src/types.ts`.
 ## Build order
 
 1. ✅ Project setup: Vite, Tailwind, shadcn base, RTL, PWA, Firebase client
-2. Data model + `firestore.rules` + emulator setup
-3. Staff login + roles
-4. Staff list: manual add, WhatsApp, hold timer, no-show
+2. ✅ Data model + `firestore.rules` (24 tests) + emulator setup
+3. ✅ Staff login + roles
+4. ✅ Staff list: manual add, WhatsApp, hold timer, no-show, seat on the map, "fits now" hints
 5. Guest QR join + live position + leave
 6. Floor map: real layout, timers, bill asked, seating, suggestions
 7. Layout editor

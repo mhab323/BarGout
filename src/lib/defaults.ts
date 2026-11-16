@@ -1,9 +1,7 @@
 import type { FloorLayout, Settings, TableSpot } from '@/types'
 
 /** Starting settings, written to config/settings on first run. */
-export const DEFAULT_SETTINGS: Omit<Settings, 'busySince'> = {
-  busyMode: false,
-  qrJoinOpen: false,
+export const DEFAULT_SETTINGS: Settings = {
   tableLimitMinutes: 120,
   warnAtMinutes: 90,
   lateAtMinutes: 110,
