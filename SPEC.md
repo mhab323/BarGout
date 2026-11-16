@@ -1,0 +1,136 @@
+# BarGout — Spec
+
+A walk-in waitlist and table-timer app for a 45-seat wine bar with no reservations.
+
+## The problem
+
+- The bar fills up fast. On busy nights 5–10 groups wait **outside**.
+- The waiting list is kept on **paper** by the owner, who is also working the floor.
+- When it's busy, tables are limited to **2 hours**, but nothing tracks how long each table has been sitting, and guests are not always told.
+- The signal that a table is about to free up is **the bill being asked for**.
+
+## Goals
+
+1. **Manage the list** (the biggest pain): who is waiting, in what order, and how to call them.
+2. **Track table time**: when each table sat down and when its 2 hours end.
+3. **Make the 2-hour rule consistent**: guests hear it every time, the same way.
+
+Every action during service should take **one or two taps**. If the app is slower than paper, it fails.
+
+## The place
+
+| Area | Seats |
+|---|---|
+| Bar | 12 stools |
+| Tables of 4 | 5 tables (20) |
+| Table of 3 | 1 table (3) |
+| Tables of 2 | 5 tables (10) |
+| **Total** | **45** |
+
+The floor map in the app must look like the real room: each table at its real position and in its real shape. The owner arranges this once in the layout editor.
+
+## Users
+
+| Who | Device | Login |
+|---|---|---|
+| Owner | own phone + tablets | Google sign-in, role `owner` |
+| Staff | 2 tablets that stay in the bar | one shared email/password staff account that stays signed in, role `staff` |
+| Guests | their own phone, via a QR code at the door | Firebase anonymous auth (invisible to them) |
+
+Owner-only: layout editor, settings, stats. Both roles can run the list and the floor.
+
+## How a night works
+
+1. **Early in the evening:** QR joining is **off**. When the first groups wait outside, the owner adds them **manually** on the tablet (name, size, phone optional, bar/table/either).
+2. **When the list grows:** the owner turns **busy mode** on (the 2-hour rule applies, timers turn colored) and **QR join** on, so guests at the door scan and add themselves.
+3. **A table is about to free up:** a waiter brings the bill and taps **"Bill asked"** on the table. The app suggests the next group that fits.
+4. **Notify:** the owner taps **WhatsApp**, and a ready Hebrew message opens in WhatsApp. One tap to send. A **10-minute hold** countdown starts.
+5. **Seat:** the group comes back, the owner taps the table (or bar stools), and their timer starts. If they don't come back, mark them **no-show** and call the next group.
+6. **Leaving:** the owner marks the table free (or the next group is seated on it).
+7. **End of night:** one button. Names and phone numbers are deleted, and only anonymous stats are kept.
+
+## Screens
+
+### Guest (`/join`, from the QR code)
+
+- **Join form**: name, group size (1–6), WhatsApp number, bar / table / either. It shows the 2-hour note when busy mode is on.
+- **When QR join is off:** "The list is managed at the door — please talk to us 🙂".
+- **After joining:** "You are #3" updates live, with a **Leave the list** button. Guests never see other people's names or numbers.
+
+### Staff — List (`/staff`)
+
+- A big **+ Add** button: name, size stepper, phone (optional), bar/table/either. This is the main way to add people early in the evening.
+- Each row shows the place, name, size, preference, wait time, and source (manual/QR).
+- Actions per row: **WhatsApp** (opens `wa.me` with the message), **Seat**, **No-show**, **Remove**.
+- Notified rows show the hold countdown (10:00 → 0:00, turns red at 0).
+
+### Staff — Floor (`/staff/floor`)
+
+- The real room drawn to scale: the bar with 12 stools and 11 tables.
+- Each occupied table shows the group name, size, and timer:
+  - **Not busy:** gray, elapsed time only
+  - **Busy:** green below 1:30, **yellow** from 1:30, **red** from 1:50, and "over time" after 2:00
+- Tap a table to see actions: **Seat group** (picks from the list), **Bill asked**, **Free table**.
+- **Bar stools** are seated individually (for example, a group of 2 takes stools 5–6), so each group at the bar has its own timer.
+- **Suggestion:** when a table is free or has the bill asked, it shows the best next group. That's the first in line that fits the seats and preference, so it may skip a group of 4 to seat a group of 2 at the bar.
+
+### Staff — Settings (`/staff/settings`)
+
+- Toggles: **Busy mode**, **QR join open**
+- Numbers: table limit (120), yellow at (90), red at (110), hold minutes (10), max group size on QR (6), country code (972)
+- Message texts (Hebrew, editable): table ready and time-limit note
+- **Layout editor** (owner): drag tables on a grid, set the shape (square/round/rect), seats, label, rotation, and the bar's stool count. Walls, door, and labels can be added so the map looks like the room.
+- **QR code**: show and print the join QR
+- **End of night**
+- **Stats** (later)
+
+## Rules and decisions
+
+- **Two-hour limit counting.** A group seated while busy mode is on counts from its seating time. If busy mode turns on later, groups already sitting count from the moment busy mode started, since they weren't told before. This is stored as `limitStartAt`.
+- **Phone numbers.** Local numbers (`05X-XXXXXXX`) are converted to international format using the country code (`9725XXXXXXXX`), as `wa.me` requires.
+- **WhatsApp** uses free click-to-chat links (`https://wa.me/<number>?text=<message>`), with no API and no cost. Automatic sending through the WhatsApp Business API is a possible later step, and it has a cost.
+- **Privacy.** Names and phones exist only during the night. "End of night" moves each group to `history/` without name or phone, then deletes it.
+- **Free plan only.** Firebase Spark has no Cloud Functions, so all logic runs in the app and data safety is enforced in `firestore.rules`.
+
+## Data model (Firestore)
+
+| Path | What | Who can read / write |
+|---|---|---|
+| `config/settings` | `Settings` | staff read, owner write |
+| `config/layout` | `FloorLayout`: tables, bar, decor with positions | staff read, owner write |
+| `parties/{id}` | `Party`: one group, from joining to leaving | staff read/write. A guest can create one (only when QR join is open), read it, and set it to `left` |
+| `public/queue` | `PublicQueue`: ordered party ids, QR open, busy — **no names** | anyone reads, staff writes |
+| `staff/{uid}` | `StaffMember`: role `owner` or `staff` | owner manages |
+| `history/{id}` | `PartyHistory`: anonymous stats | owner reads, staff writes (end of night) |
+
+Party life cycle: `waiting → notified → seated → done`. A group can also end as `no_show` (notified, didn't come back) or `left` (left the list).
+
+Types live in `src/types.ts`.
+
+## Tech stack
+
+| Part | Choice |
+|---|---|
+| Frontend | React + Vite + TypeScript |
+| UI | Tailwind CSS v4 + shadcn/ui components, Hebrew, RTL (`<html dir="rtl">`), Heebo font |
+| App | PWA (installable on tablets/phone, offline cache) |
+| Backend | Firebase (Spark free plan): Firestore + Auth (Google, Email/Password, Anonymous) |
+| Hosting | Vercel (static build, `vercel.json` rewrites to the SPA) |
+
+## Build order
+
+1. ✅ Project setup: Vite, Tailwind, shadcn base, RTL, PWA, Firebase client
+2. Data model + `firestore.rules` + emulator setup
+3. Staff login + roles
+4. Staff list: manual add, WhatsApp, hold timer, no-show
+5. Guest QR join + live position + leave
+6. Floor map: real layout, timers, bill asked, seating, suggestions
+7. Layout editor
+8. Settings, QR poster, End of night, anonymous stats
+9. Deploy to Vercel, print the QR, real-night test
+
+## Later
+
+- POS integration (the POS opens a bill per table with a start time, so it could start timers automatically)
+- Wait-time estimate on the guest page, from history
+- Automatic WhatsApp via the Business API
