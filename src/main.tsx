@@ -5,7 +5,9 @@ import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.tsx'
 
-registerSW({ immediate: true })
+// Offline app install for the staff devices only. Guests (QR page) don't need to download
+// the whole app in the background.
+if (!window.location.pathname.startsWith('/join')) registerSW({ immediate: true })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

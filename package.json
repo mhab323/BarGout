@@ -14,7 +14,8 @@
     "test": "vitest run tests/unit",
     "dev:emulators": "vite --mode emulators --host",
     "seed": "node scripts/seed-emulators.mjs",
-    "demo": "firebase emulators:exec --only auth,firestore --project demo-bargout --ui \"node scripts/seed-emulators.mjs --demo && vite --mode emulators --host\""
+    "demo": "firebase emulators:exec --only auth,firestore --project demo-bargout --ui \"node scripts/seed-emulators.mjs --demo && vite --mode emulators --host\"",
+    "deploy": "npm run build && firebase deploy --only hosting,firestore:rules"
   },
   "dependencies": {
     "@fontsource-variable/frank-ruhl-libre": "^5.3.0",
