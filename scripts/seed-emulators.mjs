@@ -5,6 +5,13 @@
  *   owner:  owner@bargout.test  / bargout123   (role owner)
  *   tablet: tablet@bargout.test / bargout123   (role staff)
  */
+// Vite (the app's dev server) needs Node 20.19+ or 22.12+. Say so clearly instead of failing later.
+const [major, minor] = process.versions.node.split('.').map(Number)
+if (major < 20 || (major === 20 && minor < 19) || (major === 22 && minor < 12) || major === 21) {
+  console.error(`\n  ✖ Node.js ${process.versions.node} is too old for the app. Install Node.js 22 (LTS) from https://nodejs.org and run "npm run demo" again.\n`)
+  process.exit(1)
+}
+
 const PROJECT = 'demo-bargout'
 const AUTH = 'http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1'
 const FS = `http://127.0.0.1:8080/v1/projects/${PROJECT}/databases/(default)/documents`
@@ -95,6 +102,12 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error(e)
+  const cause = e?.cause?.code ?? ''
+  if (cause === 'ECONNREFUSED' || String(e).includes('fetch failed')) {
+    console.error('\n  ✖ Could not reach the local Firebase emulators on 127.0.0.1 (ports 9099 / 8080).')
+    console.error('    Another program may be using those ports, or a firewall/VPN blocks localhost. Close other "npm run demo" windows and try again.\n')
+  } else {
+    console.error('\n  ✖ Could not create the demo data:', e?.message ?? e, '\n')
+  }
   process.exit(1)
 })
